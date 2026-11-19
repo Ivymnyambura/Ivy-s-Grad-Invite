@@ -1,5 +1,8 @@
 
 <script lang="ts">
+
+  import TransportGuide from '../lib/components/TransportGuide.svelte';
+
     import {
         ArrowLeft,
         ArrowRight,
@@ -10,12 +13,10 @@
         MapPin,
         Navigation,
         Sparkles,
-        Download,
-        Ticket,
         Mail
     } from '@lucide/svelte';
 
-    type Page = 'envelope' | 'invitation' | 'rsvp' | 'ticket' | 'decline';
+    type Page = 'envelope' | 'invitation' | 'rsvp' | 'confirmation' | 'decline';
 
     let page = $state<Page>('envelope');
     let guestName = $state('');
@@ -25,9 +26,10 @@
     let errorMessage = $state('');
     let previewMode = $state(false);
     let transitioning = $state(false);
+    let showDirections = $state(false);
 
-    // Add your Formspree endpoint here when it is ready.
-    const FORMSPREE_ENDPOINT = '';
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mdegzver';
+
 
     const eventDate = 'Friday, 27 November 2026';
     const eventTime = '3:00 PM onwards';
@@ -53,7 +55,7 @@
     function goBack() {
         if (page === 'invitation') navigateTo('envelope');
         else if (page === 'rsvp') navigateTo('invitation');
-        else if (page === 'ticket' || page === 'decline') navigateTo('rsvp');
+        else if (page === 'confirmation' || page === 'decline') navigateTo('rsvp');
     }
 
     function openInvitation() {
@@ -78,7 +80,7 @@
         if (!FORMSPREE_ENDPOINT) {
             previewMode = true;
             submitting = false;
-            navigateTo(attendance === 'yes' ? 'ticket' : 'decline');
+            navigateTo(attendance === 'yes' ? 'confirmation' : 'decline');
             return;
         }
 
@@ -102,7 +104,7 @@
             }
 
             previewMode = false;
-            navigateTo(attendance === 'yes' ? 'ticket' : 'decline');
+            navigateTo(attendance === 'yes' ? 'confirmation' : 'decline');
         } catch (error) {
             errorMessage =
                 error instanceof Error
@@ -112,11 +114,7 @@
             submitting = false;
         }
     }
-
-    function printTicket() {
-        window.print();
-    }
-</script>
+    </script>
 
 <svelte:head>
     <title>The Graduation Edit | Ivy Nyambura</title>
@@ -131,6 +129,8 @@
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet"
     />
+
+
 </svelte:head>
 
 <main class="site-shell">
@@ -183,8 +183,9 @@
                         </button>
                     </div>
                 </div>
-                <p class="bottom-note">Made with love, for the people who matter.</p>
+                <p class="bottom-note">Developed by Ivy Nyambura.</p>
             </div>
+
         {:else if page === 'invitation'}
             <div class="screen invitation-screen">
                 <button class="back-button" onclick={goBack}>
@@ -216,6 +217,7 @@
                                 <strong>Friday, 27 November 2026</strong>
                             </div>
                         </div>
+
                         <div class="detail-item">
                             <div class="detail-icon"><Clock3 size={22} /></div>
                             <div>
@@ -223,17 +225,24 @@
                                 <strong>3:00 PM onwards</strong>
                             </div>
                         </div>
+
                         <div class="detail-item">
                             <div class="detail-icon"><MapPin size={22} /></div>
                             <div>
-                                <span class="detail-label">THE PLACE</span>
-                                <strong>Grounds</strong>
-                                <a class="map-link" href={mapLink} target="_blank" rel="noreferrer">
-                                    Get directions <Navigation size={14} />
-                                </a>
+                                <span class="detail-label">LOCATION</span>
+                                <strong>Thika</strong>
                             </div>
                         </div>
                     </div>
+
+                    <button
+    class="directions-button"
+    type="button"
+    onclick={() => (showDirections = true)}
+>
+    <Navigation size={18} />
+    Get Directions
+</button>
 
                     <div class="invitation-divider">
                         <span></span>
@@ -246,11 +255,12 @@
                     </p>
 
                     <button class="primary-button" onclick={continueToRsvp}>
-                        Respond to invitation
+                        RSVP
                         <ArrowRight size={19} />
                     </button>
                 </div>
             </div>
+
         {:else if page === 'rsvp'}
             <div class="screen rsvp-screen">
                 <button class="back-button" onclick={goBack}>
@@ -320,7 +330,7 @@
 
                         <button class="primary-button submit-button" type="submit" disabled={submitting}>
                             {#if submitting}
-                                Preparing your response...
+                                Sending your response...
                             {:else}
                                 Send my response
                                 <ArrowRight size={19} />
@@ -329,72 +339,63 @@
                     </form>
                 </div>
             </div>
-        {:else if page === 'ticket'}
-            <div class="screen ticket-screen">
-                <button class="back-button" onclick={goBack}>
-                    <ArrowLeft size={19} />
-                    <span>Back</span>
-                </button>
 
-                <div class="ticket-content">
-                    <div class="success-icon"><Check size={27} strokeWidth={1.8} /></div>
-                    <h1>It's a date, {firstName}!</h1>
-                    <p class="ticket-intro">
-                        I'm so happy you'll be part of this celebration.
+        {:else if page === 'confirmation'}
+            <div class="screen confirmation-screen">
+                <div class="confirmation-content">
+                    <div class="success-icon">
+                        <Check size={27} strokeWidth={1.8} />
+                    </div>
+
+                    <h1>You're on the list, {firstName}.</h1>
+
+                    <p class="confirmation-intro">
+                        Your response has been saved. I'm so glad you'll be
+                        there to celebrate this moment with me.
                     </p>
 
-                    <article class="golden-ticket">
-                        <div class="ticket-top">
-                            <div class="ticket-brand">
-                                <Sparkles size={18} />
-                                <span>THE GRADUATION EDIT</span>
-                            </div>
-                            <span class="ticket-number">ADMIT ONE</span>
+                    <div class="confirmation-details">
+                        <div>
+                            <CalendarDays size={20} />
+                            <span>Friday, 27 November 2026</span>
                         </div>
-
-                        <div class="ticket-main">
-                            <p class="ticket-kicker">A DAY TO REMEMBER</p>
-                            <h2>Golden<br />Ticket</h2>
-                            <div class="ticket-divider"></div>
-                            <p class="ticket-holder-label">PREPARED FOR</p>
-                            <p class="ticket-holder">{guestName.trim()}</p>
-                            <p class="ticket-message">
-                                Your presence is the best gift.
-                                Come ready to celebrate!
-                            </p>
+                        <div>
+                            <Clock3 size={20} />
+                            <span>3:00 PM onwards</span>
                         </div>
-
-                        <div class="ticket-details">
-                            <div>
-                                <span>DATE</span>
-                                <strong>27 NOV 2026</strong>
-                            </div>
-                            <div>
-                                <span>TIME</span>
-                                <strong>3:00 PM</strong>
-                            </div>
-                            <div>
-                                <span>VENUE</span>
-                                <strong>CELEBRATION GROUNDS</strong>
-                            </div>
+                        <div>
+                            <MapPin size={20} />
+                            <span>Thika</span>
+                            <a
+    class="location-link"
+    href="https://www.google.com/maps/search/?api=1&query=-1.036956%2C37.059901"
+    target="_blank"
+    rel="noopener noreferrer"
+>
+    <MapPin size={14} />
+    View location on Google Maps
+    <ArrowRight size={13} />
+</a>
                         </div>
+                    </div>
 
-                        <div class="ticket-bottom">
-                            <span>IVY NYAMBURA</span>
-                            <span class="ticket-admission">ONE SPECIAL GUEST</span>
-                        </div>
-                    </article>
+                    <button
+    class="directions-button"
+    type="button"
+    onclick={() => (showDirections = true)}
+>
+    <Navigation size={18} />
+    Get Directions
+</button>
 
-                    <p class="ticket-footnote">
-                        Keep this little reminder close. I can't wait to see you!
+                    <p class="confirmation-closing">
+                        See you there. It's going to be a lovely day!
                     </p>
 
-                    <button class="primary-button print-button" onclick={printTicket}>
-                        <Download size={18} />
-                        Save or print your ticket
-                    </button>
+                    <p class="signature">With love, Ivy</p>
                 </div>
             </div>
+
         {:else if page === 'decline'}
             <div class="screen decline-screen">
                 <button class="back-button" onclick={goBack}>
@@ -407,9 +408,9 @@
                     <h1>Sending love<br />right back to you.</h1>
                     <p class="decline-name">Dear {firstName},</p>
                     <p class="decline-message">
-                        I'll miss having you there, but I completely understand.
-                        Thank you for being part of my journey and for celebrating
-                        this milestone with me in your own way.
+                        Your response has been saved. I'll miss having you there,
+                        but I completely understand. Thank you for taking the time
+                        to let me know, and for being part of my journey.
                     </p>
                     <div class="decline-divider">
                         <Sparkles size={20} strokeWidth={1.3} />
@@ -442,7 +443,14 @@
             <div class="transition-progress"><span></span></div>
         </div>
     {/if}
+
+
+
 </main>
+
+{#if showDirections}
+    <TransportGuide onClose={() => (showDirections = false)} />
+{/if}
 
 <style>
     :global(*) {
@@ -506,6 +514,26 @@
         left: -190px;
         background: #fff;
     }
+    .location-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    color: #A87948;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.location-link:hover {
+    color: #721F42;
+    text-decoration: underline;
+}
+
+
+
 
     .glow-two {
         right: -190px;
@@ -584,7 +612,6 @@
     }
 
     h1,
-    h2,
     p {
         margin-top: 0;
     }
@@ -737,11 +764,6 @@
         background: #C69B60;
     }
 
-    .envelope-sparkle {
-        margin-top: 19px;
-        color: #C69B60;
-    }
-
     .envelope-card-title {
         margin: 13px 0 8px;
         font-family: 'Cormorant Garamond', serif;
@@ -885,64 +907,88 @@
     }
 
     .event-details {
-        padding: 23px 28px;
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-        text-align: left;
-        border: 1px solid rgba(198,155,96,.45);
-        background: rgba(255,248,250,.52);
-        box-shadow: 0 12px 35px rgba(114,31,66,.045);
-    }
+    width: 100%;
+    max-width: 760px;
+    box-sizing: border-box;
+    margin-inline: auto;
+    padding: 30px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    text-align: left;
+    border: 1px solid rgba(198,155,96,.45);
+    background: rgba(255,248,250,.52);
+    box-shadow: 0 12px 35px rgba(114,31,66,.045);
+}
 
-    .detail-item {
-        display: flex;
-        align-items: center;
-        gap: 17px;
-    }
+.detail-item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: center;
+    gap: 20px;
+    text-align: left;
+}
 
-    .detail-icon {
-        width: 43px;
-        height: 43px;
-        flex: 0 0 43px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: #F8DCE7;
-        color: #A87948;
-    }
+.detail-icon {
+    width: 54px;
+    height: 54px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #F8DCE7;
+    color: #A87948;
+}
 
-    .detail-item > div:last-child {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
+.detail-item > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    text-align: left;
+}
 
-    .detail-label {
-        color: #A87948;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .14em;
-    }
+.detail-label {
+    color: #A87948;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .14em;
+}
 
-    .detail-item strong {
-        font-size: 15px;
-        font-weight: 600;
-    }
+.detail-item strong {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+}
 
-    .map-link {
+    .directions-button {
         width: fit-content;
+        min-width: 190px;
+        min-height: 49px;
+        margin: 22px auto;
+        padding: 13px 22px;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        color: #8D4561;
-        font-size: 12px;
+        justify-content: center;
+        gap: 10px;
+        border: 1px solid #721F42;
+        border-radius: 999px;
+        background: #721F42;
+        color: #FFF8FA;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none;
+        transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+        cursor: pointer;
     }
 
-    .map-link:hover {
-        text-decoration: underline;
+    .directions-button:hover {
+        background: #8D4561;
+        transform: translateY(-2px);
+        box-shadow: 0 9px 22px rgba(114,31,66,.17);
     }
 
     .invitation-divider {
@@ -1121,12 +1167,6 @@
         font-size: 12px;
     }
 
-    .choice-check,
-    .choice-heart {
-        color: #A87948;
-        opacity: .85;
-    }
-
     .submit-button {
         width: 100%;
         margin-top: 9px;
@@ -1150,15 +1190,16 @@
         color: #721F42;
     }
 
-    /* Golden ticket */
+    /* RSVP confirmation */
 
-    .ticket-screen {
+    .confirmation-screen {
         padding-top: 100px;
     }
 
-    .ticket-content {
+    .confirmation-content {
         width: 100%;
-        max-width: 570px;
+        max-width: 540px;
+        margin: 0 auto;
         text-align: center;
     }
 
@@ -1173,167 +1214,56 @@
         color: #FFF8FA;
     }
 
-    .ticket-content h1 {
+    .confirmation-content h1 {
+        margin-bottom: 15px;
         font-size: clamp(43px, 6vw, 65px);
     }
 
-    .ticket-intro {
-        margin-bottom: 27px;
+    .confirmation-intro {
+        max-width: 430px;
+        margin: 0 auto 28px;
         color: rgba(114,31,66,.76);
         font-size: 15px;
-        line-height: 1.7;
+        line-height: 1.8;
     }
 
-    .golden-ticket {
-        position: relative;
-        overflow: hidden;
-        padding: 22px 26px 20px;
-        text-align: left;
-        color: #5C3E22;
-        background:
-            radial-gradient(circle at 10% 15%, rgba(255,255,255,.8), transparent 26%),
-            linear-gradient(135deg, #F4E1B9 0%, #E7C98E 48%, #F6E8C8 100%);
-        border: 1px solid #C69B60;
-        box-shadow: 0 16px 38px rgba(114,31,66,.15);
-    }
-
-    .golden-ticket::before,
-    .golden-ticket::after {
-        content: '';
-        position: absolute;
-        top: 52%;
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        background: #F7BDD3;
-        transform: translateY(-50%);
-    }
-
-    .golden-ticket::before { left: -13px; }
-    .golden-ticket::after { right: -13px; }
-
-    .ticket-top,
-    .ticket-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .ticket-brand {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .13em;
-    }
-
-    .ticket-number {
-        padding: 6px 9px;
-        border: 1px solid rgba(92,62,34,.5);
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .1em;
-    }
-
-    .ticket-main {
-        padding: 28px 0 24px;
-        text-align: center;
-    }
-
-    .ticket-kicker,
-    .ticket-holder-label {
-        margin-bottom: 8px;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .19em;
-    }
-
-    .ticket-main h2 {
-        margin-bottom: 15px;
-        font-family: 'Cormorant Garamond', serif;
-        font-size: clamp(58px, 9vw, 83px);
-        line-height: .82;
-        font-weight: 500;
-        letter-spacing: -.04em;
-        color: #721F42;
-    }
-
-    .ticket-divider {
-        width: 54px;
-        height: 1px;
-        margin: 19px auto;
-        background: #A87948;
-    }
-
-    .ticket-holder-label {
-        margin-bottom: 4px;
-    }
-
-    .ticket-holder {
-        margin-bottom: 8px;
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 29px;
-        font-weight: 600;
-        color: #721F42;
-    }
-
-    .ticket-message {
-        max-width: 300px;
+    .confirmation-details {
+        max-width: 390px;
         margin: 0 auto;
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 19px;
-        font-style: italic;
-        line-height: 1.3;
-    }
-
-    .ticket-details {
-        padding: 15px 0;
+        padding: 20px;
         display: grid;
-        grid-template-columns: 1fr 1fr 1.5fr;
-        gap: 12px;
-        border-top: 1px dashed rgba(92,62,34,.55);
-        border-bottom: 1px dashed rgba(92,62,34,.55);
+        gap: 17px;
+        border: 1px solid rgba(114,31,66,.13);
+        border-radius: 16px;
+        background: rgba(255,248,250,.7);
+        text-align: left;
     }
 
-    .ticket-details div {
+    .confirmation-details div {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
+        align-items: center;
+        gap: 13px;
+        color: #721F42;
+        font-size: 14px;
     }
 
-    .ticket-details span {
-        font-size: 8px;
-        font-weight: 700;
-        letter-spacing: .13em;
+    .confirmation-details span {
+        color: #5F3948;
+        line-height: 1.5;
     }
 
-    .ticket-details strong {
-        font-size: 10px;
-        line-height: 1.4;
-    }
 
-    .ticket-bottom {
-        padding-top: 15px;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .1em;
-    }
 
-    .ticket-admission {
-        color: rgba(92,62,34,.72);
-    }
-
-    .ticket-footnote {
-        margin: 19px 0;
+    .confirmation-closing {
+        margin: 14px 0 8px;
+        color: rgba(114,31,66,.8);
         font-family: 'Cormorant Garamond', serif;
-        font-size: 19px;
+        font-size: 21px;
         font-style: italic;
     }
 
-    .print-button {
-        min-width: 245px;
+    .confirmation-content .signature {
+        margin-top: 18px;
     }
 
     /* Decline */
@@ -1527,7 +1457,7 @@
 
         .invitation-screen,
         .rsvp-screen,
-        .ticket-screen,
+        .confirmation-screen,
         .decline-screen {
             padding-top: 90px;
         }
@@ -1543,13 +1473,25 @@
         }
 
         .event-details {
-            padding: 20px 17px;
-            gap: 19px;
-        }
+    width: 100%;
+    padding: 23px 20px;
+    gap: 23px;
+}
 
-        .detail-item strong {
-            font-size: 14px;
-        }
+.detail-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 15px;
+}
+
+.detail-icon {
+    width: 48px;
+    height: 48px;
+}
+
+.detail-item strong {
+    font-size: 15px;
+    line-height: 1.5;
+}
 
         .invitation-closing {
             font-size: 20px;
@@ -1559,12 +1501,12 @@
             max-width: 470px;
         }
 
-        .ticket-details {
-            grid-template-columns: 1fr 1fr;
+        .confirmation-content h1 {
+            font-size: clamp(42px, 11vw, 58px);
         }
 
-        .ticket-details div:last-child {
-            grid-column: 1 / -1;
+        .confirmation-details {
+            padding: 17px;
         }
 
         .site-footer {
@@ -1606,17 +1548,12 @@
             font-size: 11px;
         }
 
-        .golden-ticket {
-            padding-right: 18px;
-            padding-left: 18px;
+        .directions-button {
+            min-width: 175px;
         }
 
-        .ticket-brand {
-            font-size: 8px;
-        }
-
-        .ticket-number {
-            font-size: 8px;
+        .confirmation-details div {
+            font-size: 13px;
         }
     }
 
@@ -1628,51 +1565,6 @@
             animation-duration: .01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: .01ms !important;
-        }
-    }
-
-    @media print {
-        @page {
-            size: A5 portrait;
-            margin: 10mm;
-        }
-
-        :global(body),
-        .site-shell {
-            min-height: 0;
-            background: #fff !important;
-        }
-
-        .site-header,
-        .site-footer,
-        .back-button,
-        .ticket-intro,
-        .success-icon,
-        .ticket-footnote,
-        .print-button,
-        .background-glow {
-            display: none !important;
-        }
-
-        .screen-stage,
-        .ticket-screen,
-        .ticket-content {
-            display: block;
-            min-height: 0;
-            padding: 0;
-            margin: 0;
-        }
-
-        .ticket-content h1 {
-            margin: 0 0 15px;
-            font-size: 30px;
-        }
-
-        .golden-ticket {
-            width: 100%;
-            box-shadow: none;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
         }
     }
 </style>
